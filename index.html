@@ -1,0 +1,297 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delivery App</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --card-color: #1e1e1e;
+      --accent-green: #4CAF50;
+      --accent-red: #E53935;
+      --accent-gray: #888;
+      --whatsapp: #25D366;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .order {
+      background: var(--card-color);
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 12px;
+      border-left: 6px solid var(--accent-red);
+      transition: transform 0.2s ease;
+    }
+    .order:hover {
+      transform: scale(1.01);
+    }
+    .delivered {
+      border-left-color: var(--accent-green);
+    }
+    .actions button {
+      margin: 5px 5px 0 0;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+    }
+    .delivered-btn { background: var(--accent-green); }
+    .not-delivered-btn { background: var(--accent-red); }
+    .delete-btn { background: var(--accent-gray); }
+    .whatsapp-btn { background: var(--whatsapp); }
+    .edit-btn { background: #03A9F4; }
+    .stats, .search-bar, .language-switch {
+      margin: 20px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .stat-item {
+      background: var(--card-color);
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(255,255,255,0.05);
+    }
+    input[type="text"], select {
+      padding: 10px;
+      border: 1px solid #444;
+      border-radius: 8px;
+      background: #2c2c2c;
+      color: white;
+    }
+    .notification {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #444;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: none;
+      z-index: 999;
+    }
+    .add-order-form {
+      background: var(--card-color);
+      padding: 15px;
+      border-radius: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .add-order-form input {
+      flex: 1 1 120px;
+    }
+    .lang-btn {
+      padding: 10px 15px;
+      background: #333;
+      border: none;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .clear-btn {
+      background: #d32f2f;
+      padding: 10px 15px;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="app-title">Delivery Orders</h1>
+  <div class="notification" id="notification"></div>
+  <audio id="notif-sound" src="https://actions.google.com/sounds/v1/cartoon/pop.ogg" preload="auto"></audio>
+  <div class="language-switch">
+    <button class="lang-btn" onclick="switchLanguage()">Switch to Arabic</button>
+    <button class="clear-btn" onclick="clearAllOrders()">Clear All Orders</button>
+  </div>
+  <div class="add-order-form">
+    <input type="text" id="name-input" placeholder="Customer Name">
+    <input type="text" id="region-input" placeholder="Region">
+    <input type="text" id="phone-input" placeholder="Phone">
+    <input type="text" id="tracking-input" placeholder="Tracking">
+    <button onclick="addOrder()" class="delivered-btn">Add Order</button>
+  </div>
+  <div class="stats">
+    <div class="stat-item" id="total-label">Total Orders: <span id="total-count">0</span></div>
+    <div class="stat-item" id="delivered-label">Delivered: <span id="delivered-count">0</span></div>
+    <div class="stat-item" id="pending-label">Pending: <span id="pending-count">0</span></div>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Search by phone or tracking">
+    <select id="filter-region">
+      <option value="">All Regions</option>
+    </select>
+  </div>
+  <div id="orders-list"></div>
+  <script>
+    let orders = JSON.parse(localStorage.getItem('orders')) || [];
+    let currentLang = 'en';function saveOrders() {
+  localStorage.setItem('orders', JSON.stringify(orders));
+}
+
+function playSound() {
+  document.getElementById('notif-sound').play();
+}
+
+function addOrder() {
+  const name = document.getElementById('name-input').value;
+  const region = document.getElementById('region-input').value;
+  const phone = document.getElementById('phone-input').value;
+  const tracking = document.getElementById('tracking-input').value;
+  if (!name || !region || !phone || !tracking) return alert('Please fill all fields');
+  const id = Date.now();
+  orders.push({ id, name, region, phone, tracking, delivered: false });
+  saveOrders();
+  renderOrders();
+  showNotification('Order added.');
+  playSound();
+  document.getElementById('name-input').value = '';
+  document.getElementById('region-input').value = '';
+  document.getElementById('phone-input').value = '';
+  document.getElementById('tracking-input').value = '';
+}
+
+function clearAllOrders() {
+  if (confirm('Are you sure you want to delete all orders?')) {
+    orders = [];
+    saveOrders();
+    renderOrders();
+    showNotification('All orders cleared.');
+  }
+}
+
+function toggleStatus(id) {
+  const order = orders.find(o => o.id === id);
+  if (order) order.delivered = !order.delivered;
+  saveOrders();
+  showNotification('Order status updated.');
+  playSound();
+  renderOrders();
+}
+
+function editOrder(id) {
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  const newName = prompt('Edit name:', order.name);
+  const newPhone = prompt('Edit phone:', order.phone);
+  const newRegion = prompt('Edit region:', order.region);
+  const newTracking = prompt('Edit tracking:', order.tracking);
+  if (newName && newPhone && newRegion && newTracking) {
+    Object.assign(order, {
+      name: newName,
+      phone: newPhone,
+      region: newRegion,
+      tracking: newTracking
+    });
+    saveOrders();
+    renderOrders();
+    showNotification('Order updated.');
+  }
+}
+
+function openWhatsApp(phone) {
+  window.open(`https://wa.me/964${phone}`);
+}
+
+function confirmDelete(id) {
+  if (confirm('Delete this order?')) {
+    orders = orders.filter(o => o.id !== id);
+    saveOrders();
+    renderOrders();
+    showNotification('Order deleted.');
+  }
+}
+
+function showNotification(msg) {
+  const note = document.getElementById('notification');
+  note.textContent = msg;
+  note.style.display = 'block';
+  setTimeout(() => note.style.display = 'none', 3000);
+}
+
+const searchInput = document.getElementById('search-input');
+const filterRegion = document.getElementById('filter-region');
+
+searchInput.addEventListener('input', renderOrders);
+filterRegion.addEventListener('change', renderOrders);
+
+function switchLanguage() {
+  currentLang = currentLang === 'en' ? 'ar' : 'en';
+  document.body.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('app-title').textContent = currentLang === 'ar' ? 'طلبات التوصيل' : 'Delivery Orders';
+  document.getElementById('total-label').innerHTML = (currentLang === 'ar' ? 'إجمالي الطلبات: ' : 'Total Orders: ') + `<span id="total-count">0</span>`;
+  document.getElementById('delivered-label').innerHTML = (currentLang === 'ar' ? 'تم التوصيل: ' : 'Delivered: ') + `<span id="delivered-count">0</span>`;
+  document.getElementById('pending-label').innerHTML = (currentLang === 'ar' ? 'قيد الانتظار: ' : 'Pending: ') + `<span id="pending-count">0</span>`;
+  document.querySelector('.lang-btn').textContent = currentLang === 'ar' ? 'التحويل إلى الإنجليزية' : 'Switch to Arabic';
+  renderOrders();
+}
+
+function renderOrders() {
+  const list = document.getElementById('orders-list');
+  list.innerHTML = '';
+  const search = searchInput.value.toLowerCase();
+  const region = filterRegion.value;
+  let total = 0, delivered = 0, pending = 0;
+  const regions = new Set();
+
+  orders.sort((a, b) => a.region.localeCompare(b.region));
+
+  for (let order of orders) {
+    if ((order.phone + order.tracking).toLowerCase().includes(search) &&
+        (region === '' || order.region === region)) {
+      const div = document.createElement('div');
+      div.className = 'order ' + (order.delivered ? 'delivered' : '');
+      div.innerHTML = `
+        <strong>${order.name}</strong> - ${order.region}<br>
+        ${order.phone} - ${order.tracking}<br>
+        <div class="actions">
+          <button class="delivered-btn" onclick="toggleStatus(${order.id})">${order.delivered ? 'Undo' : 'Delivered'}</button>
+          <button class="edit-btn" onclick="editOrder(${order.id})">Edit</button>
+          <button class="whatsapp-btn" onclick="openWhatsApp('${order.phone}')">WhatsApp</button>
+          <button class="delete-btn" onclick="confirmDelete(${order.id})">Delete</button>
+        </div>
+      `;
+      list.appendChild(div);
+
+      total++;
+      if (order.delivered) delivered++;
+      else pending++;
+
+      regions.add(order.region);
+    }
+  }
+
+  document.getElementById('total-count').textContent = total;
+  document.getElementById('delivered-count').textContent = delivered;
+  document.getElementById('pending-count').textContent = pending;
+
+  filterRegion.innerHTML = '<option value="">All Regions</option>';
+  [...regions].sort().forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r;
+    opt.textContent = r;
+    if (r === region) opt.selected = true;
+    filterRegion.appendChild(opt);
+  });
+}
+
+renderOrders();
+
+  </script>
+</body>
+</html>
