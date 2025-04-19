@@ -1,297 +1,547 @@
-<!DOCTYPE html><html lang="en"><head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Delivery App</title>
-  <style>
-    :root {
-      --bg-color: #121212;
-      --text-color: #f0f0f0;
-      --card-color: #1e1e1e;
-      --accent-green: #4CAF50;
-      --accent-red: #E53935;
-      --accent-gray: #888;
-      --whatsapp: #25D366;
-    }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-    }
-    .order {
-      background: var(--card-color);
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 12px;
-      border-left: 6px solid var(--accent-red);
-      transition: transform 0.2s ease;
-    }
-    .order:hover {
-      transform: scale(1.01);
-    }
-    .delivered {
-      border-left-color: var(--accent-green);
-    }
-    .actions button {
-      margin: 5px 5px 0 0;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: white;
-      font-weight: bold;
-    }
-    .delivered-btn { background: var(--accent-green); }
-    .not-delivered-btn { background: var(--accent-red); }
-    .delete-btn { background: var(--accent-gray); }
-    .whatsapp-btn { background: var(--whatsapp); }
-    .edit-btn { background: #03A9F4; }
-    .stats, .search-bar, .language-switch {
-      margin: 20px 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    .stat-item {
-      background: var(--card-color);
-      padding: 10px 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(255,255,255,0.05);
-    }
-    input[type="text"], select {
-      padding: 10px;
-      border: 1px solid #444;
-      border-radius: 8px;
-      background: #2c2c2c;
-      color: white;
-    }
-    .notification {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #444;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      display: none;
-      z-index: 999;
-    }
-    .add-order-form {
-      background: var(--card-color);
-      padding: 15px;
-      border-radius: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    .add-order-form input {
-      flex: 1 1 120px;
-    }
-    .lang-btn {
-      padding: 10px 15px;
-      background: #333;
-      border: none;
-      color: white;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    .clear-btn {
-      background: #d32f2f;
-      padding: 10px 15px;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-  </style>
-</head><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<body>
-  <h1 id="app-title">Delivery Orders</h1>
-  <div class="notification" id="notification"></div>
-  <audio id="notif-sound" src="https://actions.google.com/sounds/v1/cartoon/pop.ogg" preload="auto"></audio>
-  <div class="language-switch">
-    <button class="lang-btn" onclick="switchLanguage()">Switch to Arabic</button>
-    <button class="clear-btn" onclick="clearAllOrders()">Clear All Orders</button>
-  </div>
-  <div class="add-order-form">
-    <input type="text" id="name-input" placeholder="Customer Name">
-    <input type="text" id="region-input" placeholder="Region">
-    <input type="text" id="phone-input" placeholder="Phone">
-    <input type="text" id="tracking-input" placeholder="Tracking">
-    <button onclick="addOrder()" class="delivered-btn">Add Order</button>
-  </div>
-  <div class="stats">
-    <div class="stat-item" id="total-label">Total Orders: <span id="total-count">0</span></div>
-    <div class="stat-item" id="delivered-label">Delivered: <span id="delivered-count">0</span></div>
-    <div class="stat-item" id="pending-label">Pending: <span id="pending-count">0</span></div>
-  </div>
-  <div class="search-bar">
-    <input type="text" id="search-input" placeholder="Search by phone or tracking">
-    <select id="filter-region">
-      <option value="">All Regions</option>
-    </select>
-  </div>
-  <div id="orders-list"></div>
-  <script>
-    let orders = JSON.parse(localStorage.getItem('orders')) || [];
-    let currentLang = 'en';function saveOrders() {
-  localStorage.setItem('orders', JSON.stringify(orders));
-}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>طلبات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Tajawal:wght@400;500;700&display=swap');
+        body { font-family: 'Tajawal', 'Inter', sans-serif; background-color: #111827; color: #f3f4f6; padding-bottom: 20px; }
+        .light-mode { background-color: #f3f4f6; color: #1f2937; }
+        .light-mode header { background-color: #3b82f6; }
+        .light-mode .form-container, .light-mode .stats-container, .light-mode .area-group, .light-mode .order, .light-mode .modal-content, .light-mode .filters select, .light-mode .filters input, .light-mode .no-orders { background-color: #ffffff; color: #1f2937; border-color: #e5e7eb; }
+        .light-mode .area-header { background-color: #60a5fa; color: #ffffff; }
+        .light-mode input, .light-mode textarea, .light-mode select { background-color: #f9fafb; border-color: #d1d5db; color: #1f2937; }
+        .light-mode input::placeholder, .light-mode textarea::placeholder { color: #9ca3af; }
+        .light-mode .modal-content { border: 1px solid #e5e7eb; }
+        .light-mode .modal-close { color: #6b7280; }
+        .light-mode .toast { background-color: #22c55e; color: white; }
+        .light-mode .toast.error { background-color: #ef4444; }
+        .light-mode .icon-button { background-color: #e5e7eb; color: #374151; }
+        .light-mode .icon-button:hover { background-color: #d1d5db; }
+        .light-mode .btn-delivered { background-color: #22c55e; color: white; }
+        .light-mode .btn-delay { background-color: #0ea5e9; color: white; }
+        .light-mode .btn-whatsapp { background-color: #25D366; color: white; }
+        .light-mode .btn-edit { background-color: #3b82f6; color: white; }
+        .light-mode .btn-delete { background-color: #ef4444; color: white; }
+        .light-mode .btn-camera { background-color: #a855f7; color: white; }
+        .light-mode .btn-clear-all { background-color: #ef4444; color: white; }
+        .light-mode .btn-clear-all:hover { background-color: #dc2626; }
+        .light-mode .add-btn { background-color: #16a34a; color: white; }
+        .light-mode .add-btn:hover { background-color: #15803d; }
+        .light-mode .modal button { background-color: #6b7280; color: white; }
+        .light-mode .modal button:hover { background-color: #4b5563; }
+        .light-mode .modal .btn-delete { background-color: #ef4444; color: white; }
+        .light-mode .modal .btn-delete:hover { background-color: #dc2626; }
+        .light-mode .order.urgent { border-left-color: #f59e0b; }
+        [dir="rtl"].light-mode .order.urgent { border-right-color: #f59e0b; border-left-color: transparent; }
+        .hidden-file-input { display: none; }
+        .order-thumbnail { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; cursor: pointer; margin-top: 8px; transition: transform 0.2s ease-in-out; }
+        .order-thumbnail:hover { transform: scale(1.1); }
+        .image-modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+        .image-modal-content { margin: auto; display: block; max-width: 90%; max-height: 80%; border-radius: 8px; }
+        .image-modal-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer; }
+        .image-modal-close:hover, .image-modal-close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
+        [dir="rtl"] .order.urgent { border-right: 4px solid #f59e0b; border-left: none; }
+        [dir="ltr"] .order.urgent { border-left: 4px solid #f59e0b; border-right: none; }
+        .collapse-icon { transition: transform 0.3s; }
+        .collapsed .collapse-icon { transform: rotate(-90deg); }
+        [dir="rtl"] .collapsed .collapse-icon { transform: rotate(90deg); }
+        /* Animation for collapsible sections */
+        .area-orders { transition: max-height 0.3s ease-out, padding 0.3s ease-out; overflow: hidden; }
+    </style>
+</head>
+<body class="text-gray-100 bg-gray-900">
 
-function playSound() {
-  document.getElementById('notif-sound').play();
-}
-
-function addOrder() {
-  const name = document.getElementById('name-input').value;
-  const region = document.getElementById('region-input').value;
-  const phone = document.getElementById('phone-input').value;
-  const tracking = document.getElementById('tracking-input').value;
-  if (!name || !region || !phone || !tracking) return alert('Please fill all fields');
-  const id = Date.now();
-  orders.push({ id, name, region, phone, tracking, delivered: false });
-  saveOrders();
-  renderOrders();
-  showNotification('Order added.');
-  playSound();
-  document.getElementById('name-input').value = '';
-  document.getElementById('region-input').value = '';
-  document.getElementById('phone-input').value = '';
-  document.getElementById('tracking-input').value = '';
-}
-
-function clearAllOrders() {
-  if (confirm('Are you sure you want to delete all orders?')) {
-    orders = [];
-    saveOrders();
-    renderOrders();
-    showNotification('All orders cleared.');
-  }
-}
-
-function toggleStatus(id) {
-  const order = orders.find(o => o.id === id);
-  if (order) order.delivered = !order.delivered;
-  saveOrders();
-  showNotification('Order status updated.');
-  playSound();
-  renderOrders();
-}
-
-function editOrder(id) {
-  const order = orders.find(o => o.id === id);
-  if (!order) return;
-  const newName = prompt('Edit name:', order.name);
-  const newPhone = prompt('Edit phone:', order.phone);
-  const newRegion = prompt('Edit region:', order.region);
-  const newTracking = prompt('Edit tracking:', order.tracking);
-  if (newName && newPhone && newRegion && newTracking) {
-    Object.assign(order, {
-      name: newName,
-      phone: newPhone,
-      region: newRegion,
-      tracking: newTracking
-    });
-    saveOrders();
-    renderOrders();
-    showNotification('Order updated.');
-  }
-}
-
-function openWhatsApp(phone) {
-  window.open(`https://wa.me/964${phone}`);
-}
-
-function confirmDelete(id) {
-  if (confirm('Delete this order?')) {
-    orders = orders.filter(o => o.id !== id);
-    saveOrders();
-    renderOrders();
-    showNotification('Order deleted.');
-  }
-}
-
-function showNotification(msg) {
-  const note = document.getElementById('notification');
-  note.textContent = msg;
-  note.style.display = 'block';
-  setTimeout(() => note.style.display = 'none', 3000);
-}
-
-const searchInput = document.getElementById('search-input');
-const filterRegion = document.getElementById('filter-region');
-
-searchInput.addEventListener('input', renderOrders);
-filterRegion.addEventListener('change', renderOrders);
-
-function switchLanguage() {
-  currentLang = currentLang === 'en' ? 'ar' : 'en';
-  document.body.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-  document.getElementById('app-title').textContent = currentLang === 'ar' ? 'طلبات التوصيل' : 'Delivery Orders';
-  document.getElementById('total-label').innerHTML = (currentLang === 'ar' ? 'إجمالي الطلبات: ' : 'Total Orders: ') + `<span id="total-count">0</span>`;
-  document.getElementById('delivered-label').innerHTML = (currentLang === 'ar' ? 'تم التوصيل: ' : 'Delivered: ') + `<span id="delivered-count">0</span>`;
-  document.getElementById('pending-label').innerHTML = (currentLang === 'ar' ? 'قيد الانتظار: ' : 'Pending: ') + `<span id="pending-count">0</span>`;
-  document.querySelector('.lang-btn').textContent = currentLang === 'ar' ? 'التحويل إلى الإنجليزية' : 'Switch to Arabic';
-  renderOrders();
-}
-
-function renderOrders() {
-  const list = document.getElementById('orders-list');
-  list.innerHTML = '';
-  const search = searchInput.value.toLowerCase();
-  const region = filterRegion.value;
-  let total = 0, delivered = 0, pending = 0;
-  const regions = new Set();
-
-  orders.sort((a, b) => a.region.localeCompare(b.region));
-
-  for (let order of orders) {
-    if ((order.phone + order.tracking).toLowerCase().includes(search) &&
-        (region === '' || order.region === region)) {
-      const div = document.createElement('div');
-      div.className = 'order ' + (order.delivered ? 'delivered' : '');
-      div.innerHTML = `
-        <strong>${order.name}</strong> - ${order.region}<br>
-        ${order.phone} - ${order.tracking}<br>
-        <div class="actions">
-          <button class="delivered-btn" onclick="toggleStatus(${order.id})">${order.delivered ? 'Undo' : 'Delivered'}</button>
-          <button class="edit-btn" onclick="editOrder(${order.id})">Edit</button>
-          <button class="whatsapp-btn" onclick="openWhatsApp('${order.phone}')">WhatsApp</button>
-          <button class="delete-btn" onclick="confirmDelete(${order.id})">Delete</button>
+    <header class="w-full bg-gray-800 p-4 shadow-md mb-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 id="pageTitle" class="text-xl sm:text-2xl font-bold text-white">طلبات</h1>
+            <div class="toggle-container flex items-center gap-2 sm:gap-3">
+                <button id="langToggle" class="text-white hover:text-gray-300 text-lg sm:text-xl p-1" title="تغيير اللغة"><i class="fas fa-language"></i></button>
+                <button id="themeToggle" class="text-white hover:text-gray-300 text-lg sm:text-xl p-1" title="تغيير المظهر"><i class="fas fa-moon"></i></button>
+                <button id="backupBtn" class="text-white hover:text-gray-300 text-lg sm:text-xl p-1" title="تحميل نسخة احتياطية"><i class="fas fa-download"></i></button>
+                <button id="clearAllBtn" class="text-white bg-red-600 hover:bg-red-700 rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm p-1" title="حذف جميع الطلبات" onclick="showConfirmClearAll()"> <i class="fas fa-trash-alt"></i> </button>
+            </div>
         </div>
-      `;
-      list.appendChild(div);
+    </header>
 
-      total++;
-      if (order.delivered) delivered++;
-      else pending++;
+    <div class="stats-container container mx-auto px-4 mb-4 bg-gray-800 p-4 rounded-lg shadow">
+        <div class="flex flex-wrap justify-around items-center gap-4 text-center">
+            <div class="stat-item"> <span id="totalLabel" class="text-sm text-gray-400 block">الكل</span> <span class="stat-value text-2xl font-bold text-blue-400" id="countTotal">0</span> </div>
+            <div class="stat-item"> <span id="deliveredLabel" class="text-sm text-gray-400 block">موصل</span> <span class="stat-value text-2xl font-bold text-green-400" id="countDelivered">0</span> </div>
+            <div class="stat-item"> <span id="pendingLabel" class="text-sm text-gray-400 block">غير موصل</span> <span class="stat-value text-2xl font-bold text-red-400" id="countPending">0</span> </div>
+            <div class="stat-item"> <span id="delayedLabel" class="text-sm text-gray-400 block">مؤجل</span> <span class="stat-value text-2xl font-bold text-sky-400" id="countDelayed">0</span> </div>
+        </div>
+        <div class="most-area text-center text-amber-400 text-sm mt-3" id="mostArea"></div>
+    </div>
 
-      regions.add(order.region);
-    }
-  }
+    <div class="filters container mx-auto px-4 mb-6 flex flex-wrap justify-center gap-3">
+        <select id="filterStatus" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"> <option value="all" id="filterAllLabel">كل الحالات</option> <option value="delivered" id="filterDeliveredLabel">تم التوصيل</option> <option value="pending" id="filterPendingLabel">لم يتم التوصيل</option> <option value="delayed" id="filterDelayedLabel">مؤجل</option> </select>
+        <select id="filterArea" class="bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"> <option value="all" id="filterAllAreasLabel">كل المناطق</option> </select>
+        <input class="search-input bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 flex-grow max-w-xs" type="text" id="searchBox" placeholder="🔍 بحث...">
+    </div>
 
-  document.getElementById('total-count').textContent = total;
-  document.getElementById('delivered-count').textContent = delivered;
-  document.getElementById('pending-count').textContent = pending;
+    <div class="form-container container mx-auto px-4 mb-8 bg-gray-800 p-6 rounded-lg shadow-lg max-w-xl">
+        <h2 id="addOrderTitle" class="text-xl font-semibold mb-4 text-center">إضافة طلب جديد</h2>
+        <div class="space-y-4">
+            <div> <label for="phone" id="phoneLabel" class="block text-sm font-medium mb-1">رقم الزبون:</label> <input type="text" id="phone" placeholder="07XXXXXXXXX" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"> <div class="error-message text-red-400 text-xs mt-1" id="phoneError" style="display: none;"></div> </div>
+            <div> <label for="area" id="areaLabel" class="block text-sm font-medium mb-1">المنطقة:</label> <input type="text" id="area" placeholder="منطقة الزبون" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"> <div class="error-message text-red-400 text-xs mt-1" id="areaError" style="display: none;"></div> </div>
+            <div> <label for="track" id="trackLabel" class="block text-sm font-medium mb-1">رقم التتبع:</label> <input type="text" id="track" placeholder="رقم التتبع الخاص بالطلب" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"> <div class="error-message text-red-400 text-xs mt-1" id="trackError" style="display: none;"></div> </div>
+            <div> <label for="note" id="noteLabel" class="block text-sm font-medium mb-1">ملاحظات (اختياري):</label> <textarea id="note" placeholder="أي ملاحظات إضافية حول الطلب" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 resize-none"></textarea> </div>
+            <div class="flex items-center gap-2"> <input type="checkbox" id="urgent" class="rounded border-gray-600 text-blue-500 focus:ring-blue-500"> <label for="urgent" id="urgentLabel" class="text-sm font-medium">طلب مستعجل</label> </div>
+            <button class="add-btn w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition duration-150 ease-in-out" id="addOrderBtn" onclick="addOrder()"> <i class="fas fa-plus"></i> <span id="addBtnText">إضافة الطلب</span> </button>
+        </div>
+    </div>
 
-  filterRegion.innerHTML = '<option value="">All Regions</option>';
-  [...regions].sort().forEach(r => {
-    const opt = document.createElement('option');
-    opt.value = r;
-    opt.textContent = r;
-    if (r === region) opt.selected = true;
-    filterRegion.appendChild(opt);
-  });
-}
+    <div class="loader" id="loader" style="display: none;"></div>
 
-renderOrders();
+    <div id="ordersContainer" class="container mx-auto px-4 space-y-4"></div>
 
-  </script>
+    <div id="editModal" class="modal fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="modal-content bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto">
+            <div class="modal-header flex justify-between items-center mb-4"> <div class="modal-title text-xl font-semibold text-blue-400" id="editOrderTitle">تعديل الطلب</div> <button class="modal-close text-gray-400 hover:text-white text-2xl" onclick="closeModal('editModal')">&times;</button> </div>
+            <div class="space-y-4">
+                <div> <label for="editPhone" id="editPhoneLabel" class="block text-sm font-medium mb-1">رقم الزبون:</label> <input type="text" id="editPhone" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"> <div class="error-message text-red-400 text-xs mt-1" id="editPhoneError" style="display: none;"></div> </div>
+                <div> <label for="editArea" id="editAreaLabel" class="block text-sm font-medium mb-1">المنطقة:</label> <input type="text" id="editArea" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"> <div class="error-message text-red-400 text-xs mt-1" id="editAreaError" style="display: none;"></div> </div>
+                <div> <label for="editTrack" id="editTrackLabel" class="block text-sm font-medium mb-1">رقم التتبع:</label> <input type="text" id="editTrack" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"> <div class="error-message text-red-400 text-xs mt-1" id="editTrackError" style="display: none;"></div> </div>
+                <div> <label for="editNote" id="editNoteLabel" class="block text-sm font-medium mb-1">ملاحظات (اختياري):</label> <textarea id="editNote" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 resize-none"></textarea> </div>
+                <div class="flex items-center gap-2"> <input type="checkbox" id="editUrgent" class="rounded border-gray-600 text-blue-500 focus:ring-blue-500"> <label for="editUrgent" id="editUrgentLabel" class="text-sm font-medium">طلب مستعجل</label> </div>
+                <input type="hidden" id="editOrderId">
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition duration-150 ease-in-out" onclick="updateOrder()"> <i class="fas fa-save"></i> <span id="saveChangesBtn">حفظ التغييرات</span> </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="modal-content bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <div class="modal-header flex justify-between items-center mb-4"> <div class="modal-title text-lg font-semibold text-yellow-400" id="confirmTitle">تأكيد</div> <button class="modal-close text-gray-400 hover:text-white text-2xl" onclick="closeModal('confirmModal')">&times;</button> </div>
+            <p id="confirmMessage" class="mb-6 text-sm">هل أنت متأكد؟</p>
+            <div class="flex justify-end gap-3"> <button class="bg-gray-600 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out" onclick="closeModal('confirmModal')" id="cancelBtn">إلغاء</button> <button class="btn-delete bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg text-sm flex items-center gap-1 transition duration-150 ease-in-out" id="confirmBtn" onclick="confirmAction()"> <i class="fas fa-trash"></i> <span id="confirmBtnText">حذف</span> </button> </div>
+        </div>
+    </div>
+
+     <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <span class="image-modal-close" onclick="closeImageModal(event)">&times;</span>
+        <img class="image-modal-content" id="modalImage">
+    </div>
+
+    <input type="file" id="hiddenCameraInput" accept="image/*" capture="camera" style="display: none;">
+
+    <div id="toast" class="toast fixed bottom-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-md text-sm z-[1000] transition-opacity duration-300 opacity-0"></div>
+
+    <script>
+        // Translations object (same as before)
+        const translations = {
+             ar: { pageTitle: "طلبات", totalLabel: "الكل", deliveredLabel: "موصل", pendingLabel: "غير موصل", delayedLabel: "مؤجل", filterAllLabel: "كل الحالات", filterDeliveredLabel: "تم التوصيل", filterPendingLabel: "لم يتم التوصيل", filterDelayedLabel: "مؤجل", filterAllAreasLabel: "كل المناطق", addOrderTitle: "إضافة طلب جديد", phoneLabel: "رقم الزبون:", areaLabel: "المنطقة:", trackLabel: "رقم التتبع:", noteLabel: "ملاحظات (اختياري):", urgentLabel: "طلب مستعجل", addBtnText: "إضافة الطلب", editOrderTitle: "تعديل الطلب", editPhoneLabel: "رقم الزبون:", editAreaLabel: "المنطقة:", editTrackLabel: "رقم التتبع:", editNoteLabel: "ملاحظات (اختياري):", editUrgentLabel: "طلب مستعجل", saveChangesBtn: "حفظ التغييرات", confirmTitle: "تأكيد", confirmDeleteMessage: "هل أنت متأكد من رغبتك في حذف هذا الطلب؟", confirmClearAllMessage: "هل أنت متأكد من رغبتك في حذف جميع الطلبات؟ هذا الإجراء لا يمكن التراجع عنه.", cancelBtn: "إلغاء", confirmBtnText: "حذف", phoneError: "يجب أن يبدأ الرقم بـ 07 ويتكون من 11 رقم", areaError: "يرجى إدخال المنطقة", trackError: "يرجى إدخال رقم التتبع", searchPlaceholder: "🔍 بحث...", orderAdded: "تم إضافة الطلب بنجاح", orderUpdated: "تم تحديث الطلب بنجاح", orderDeleted: "تم حذف الطلب", duplicateTrack: "رقم التتبع موجود مسبقاً", allOrdersCleared: "تم حذف جميع الطلبات بنجاح", statusDelivered: "تم التوصيل", statusPending: "لم يتم التوصيل", statusDelayed: "مؤجل", customerPhone: "رقم الزبون:", area: "المنطقة:", trackNumber: "رقم التتبع:", notes: "ملاحظات:", noOrders: "لا توجد طلبات لعرضها.", mostAreaText: "أكثر منطقة:", imageAttached: "تم إرفاق الصورة بنجاح", imageAttachError: "حدث خطأ أثناء إرفاق الصورة", cameraError: "لا يمكن الوصول إلى الكاميرا أو تم إلغاء الالتقاط.", clearAllOrdersTitle: "حذف جميع الطلبات", }
+             ,en: { pageTitle: "Orders", totalLabel: "Total", deliveredLabel: "Delivered", pendingLabel: "Undelivered", delayedLabel: "Delayed", filterAllLabel: "All Statuses", filterDeliveredLabel: "Delivered", filterPendingLabel: "Undelivered", filterDelayedLabel: "Delayed", filterAllAreasLabel: "All Areas", addOrderTitle: "Add New Order", phoneLabel: "Customer Phone:", areaLabel: "Area:", trackLabel: "Tracking Number:", noteLabel: "Notes (Optional):", urgentLabel: "Urgent Order", addBtnText: "Add Order", editOrderTitle: "Edit Order", editPhoneLabel: "Customer Phone:", editAreaLabel: "Area:", editTrackLabel: "Tracking Number:", editNoteLabel: "Notes (Optional):", editUrgentLabel: "Urgent Order", saveChangesBtn: "Save Changes", confirmTitle: "Confirmation", confirmDeleteMessage: "Are you sure you want to delete this order?", confirmClearAllMessage: "Are you sure you want to delete all orders? This action cannot be undone.", cancelBtn: "Cancel", confirmBtnText: "Delete", phoneError: "Phone must start with 07 and be 11 digits", areaError: "Please enter the area", trackError: "Please enter tracking number", searchPlaceholder: "🔍 Search...", orderAdded: "Order added successfully", orderUpdated: "Order updated successfully", orderDeleted: "Order deleted", duplicateTrack: "Tracking number already exists", allOrdersCleared: "All orders deleted successfully", statusDelivered: "Delivered", statusPending: "Not Delivered", statusDelayed: "Delayed", customerPhone: "Customer Phone:", area: "Area:", trackNumber: "Tracking Number:", notes: "Notes:", noOrders: "No orders to display.", mostAreaText: "Most frequent area:", imageAttached: "Image attached successfully", imageAttachError: "Error attaching image", cameraError: "Could not access camera or capture was cancelled.", clearAllOrdersTitle: "Delete All Orders", }
+        };
+
+        // Global variables
+        let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+        let currentLanguage = localStorage.getItem('language') || 'ar';
+        let currentTheme = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        let confirmCallback = null;
+        let currentOrderIdForImage = null; // Variable to store the order ID for the current image capture
+
+        // DOM Elements
+        const ordersContainer = document.getElementById('ordersContainer');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const hiddenCameraInput = document.getElementById('hiddenCameraInput'); // Get the single hidden input
+
+        // Initial setup on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            applyLanguage(currentLanguage);
+            applyTheme(currentTheme);
+            updateAreaFilter();
+            renderOrders();
+
+            // Event listeners
+            document.getElementById('filterStatus').addEventListener('change', renderOrders);
+            document.getElementById('filterArea').addEventListener('change', renderOrders);
+            document.getElementById('searchBox').addEventListener('input', renderOrders);
+            document.getElementById('langToggle').addEventListener('click', toggleLanguage);
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            document.getElementById('backupBtn').addEventListener('click', downloadBackup);
+
+            // Add event listener to the single hidden file input
+            hiddenCameraInput.addEventListener('change', handleImageCapture);
+        });
+
+        // --- Language and Theme Functions (mostly unchanged) ---
+        function toggleLanguage() {
+             currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+             localStorage.setItem('language', currentLanguage);
+             applyLanguage(currentLanguage);
+        }
+        function applyLanguage(lang) {
+             const isRTL = lang === 'ar';
+             document.documentElement.setAttribute('lang', lang);
+             document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+             for (const [key, value] of Object.entries(translations[lang])) {
+                 const el = document.getElementById(key);
+                 if (el) {
+                     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') { // Added SELECT
+                         if (el.placeholder !== undefined) el.placeholder = value;
+                         // Update error messages specifically if needed
+                         if (key.endsWith('Error')) el.textContent = value;
+                         // Update select option text
+                         if (el.tagName === 'SELECT') {
+                             const options = el.options;
+                             for(let i = 0; i < options.length; i++) {
+                                 if (options[i].id === key) {
+                                     options[i].textContent = value;
+                                 }
+                             }
+                         }
+                     } else {
+                         const icon = el.querySelector('i');
+                         if (icon && el.childNodes.length > 1) {
+                             const textNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '');
+                             if (textNode) textNode.textContent = ` ${value} `;
+                             else el.appendChild(document.createTextNode(` ${value} `));
+                         } else { el.textContent = value; }
+                     }
+                 }
+             }
+             document.getElementById('searchBox').placeholder = translations[lang].searchPlaceholder;
+             document.getElementById('langToggle').title = lang === 'ar' ? 'Change Language' : 'تغيير اللغة';
+             document.getElementById('themeToggle').title = lang === 'ar' ? 'Change Theme' : 'تغيير المظهر';
+             document.getElementById('backupBtn').title = lang === 'ar' ? 'Download Backup' : 'تحميل نسخة احتياطية';
+             document.getElementById('clearAllBtn').title = lang === 'ar' ? 'Delete All Orders' : 'حذف جميع الطلبات';
+             // Reset error messages in forms based on language
+             document.getElementById('phoneError').textContent = translations[lang].phoneError;
+             document.getElementById('areaError').textContent = translations[lang].areaError;
+             document.getElementById('trackError').textContent = translations[lang].trackError;
+             document.getElementById('editPhoneError').textContent = translations[lang].phoneError;
+             document.getElementById('editAreaError').textContent = translations[lang].areaError;
+             document.getElementById('editTrackError').textContent = translations[lang].trackError;
+
+             // Update titles for buttons in rendered orders
+             document.querySelectorAll('.order').forEach(orderElement => {
+                 const orderId = parseInt(orderElement.getAttribute('data-order-id'));
+                 const order = orders.find(o => o.id === orderId);
+                 if (order) {
+                     orderElement.querySelector('.btn-delivered').title = order.delivered ? translations[currentLanguage].statusPending : translations[currentLanguage].statusDelivered;
+                     orderElement.querySelector('.btn-delay').title = order.delayed ? (lang === 'ar' ? 'إلغاء التأجيل' : 'Cancel Delay') : translations[currentLanguage].statusDelayed;
+                     orderElement.querySelector('.btn-edit').title = translations[currentLanguage].editOrderTitle;
+                     orderElement.querySelector('.btn-delete').title = translations[currentLanguage].confirmBtnText;
+                     orderElement.querySelector('.btn-camera').title = (lang === 'ar' ? 'إرفاق صورة' : 'Attach Image');
+                     if (order.urgent) {
+                          const urgentIcon = orderElement.querySelector('.fa-star');
+                          if (urgentIcon) urgentIcon.title = (lang === 'ar' ? 'طلب مستعجل' : 'Urgent Order');
+                     }
+                 }
+             });
+
+
+             renderOrders(); // Re-render orders to apply language to status text etc.
+        }
+        function toggleTheme() {
+             currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+             localStorage.setItem('theme', currentTheme);
+             applyTheme(currentTheme);
+        }
+        function applyTheme(theme) {
+             const body = document.body;
+             const themeIcon = document.getElementById('themeToggle').querySelector('i');
+             if (theme === 'light') {
+                 body.classList.add('light-mode');
+                 body.classList.remove('bg-gray-900', 'text-gray-100'); body.classList.add('bg-gray-100', 'text-gray-800');
+                 themeIcon.classList.replace('fa-sun', 'fa-moon');
+             } else {
+                 body.classList.remove('light-mode');
+                 body.classList.remove('bg-gray-100', 'text-gray-800'); body.classList.add('bg-gray-900', 'text-gray-100');
+                 themeIcon.classList.replace('fa-moon', 'fa-sun');
+             }
+        }
+
+        // --- Order Management Functions (mostly unchanged, with added logging for track validation) ---
+        function saveOrders() { localStorage.setItem('orders', JSON.stringify(orders)); updateAreaFilter(); updateStats(); }
+        function updateAreaFilter() {
+             const areaSet = new Set(orders.map(o => o.area));
+             const areaFilter = document.getElementById('filterArea');
+             const currentFilterValue = areaFilter.value;
+             areaFilter.innerHTML = `<option value="all">${translations[currentLanguage].filterAllAreasLabel}</option>`;
+             [...areaSet].sort((a, b) => a.localeCompare(b, currentLanguage === 'ar' ? 'ar' : 'en')).forEach(area => {
+                 const option = document.createElement('option'); option.value = area; option.textContent = area; areaFilter.appendChild(option);
+             });
+             if ([...areaFilter.options].some(opt => opt.value === currentFilterValue)) { areaFilter.value = currentFilterValue; } else { areaFilter.value = 'all'; }
+        }
+        function validatePhone(phone) { return /^07\d{9}$/.test(phone); }
+        function isDuplicateTrack(track, excludeId = null) {
+             // Log the track value being checked for duplicates
+             console.log(`Checking for duplicate track: "${track.trim().toLowerCase()}" (excluding ID: ${excludeId})`);
+             const isDuplicate = orders.some(o => o.track.trim().toLowerCase() === track.trim().toLowerCase() && (!excludeId || o.id !== excludeId));
+             console.log(`Is duplicate? ${isDuplicate}`);
+             return isDuplicate;
+        }
+        function addOrder() {
+             const phoneInput = document.getElementById('phone'); const areaInput = document.getElementById('area');
+             const trackInput = document.getElementById('track'); const noteInput = document.getElementById('note');
+             const urgentInput = document.getElementById('urgent');
+             const phone = phoneInput.value.trim(); const area = areaInput.value.trim();
+             const track = trackInput.value.trim(); const note = noteInput.value.trim();
+             const urgent = urgentInput.checked;
+             document.getElementById('phoneError').style.display = 'none'; phoneInput.classList.remove('border-red-500');
+             document.getElementById('areaError').style.display = 'none'; areaInput.classList.remove('border-red-500');
+             document.getElementById('trackError').style.display = 'none'; trackInput.classList.remove('border-red-500');
+             let hasError = false;
+             if (!validatePhone(phone)) { document.getElementById('phoneError').style.display = 'block'; phoneInput.classList.add('border-red-500'); hasError = true; }
+             if (!area) { document.getElementById('areaError').style.display = 'block'; areaInput.classList.add('border-red-500'); hasError = true; }
+             if (!track) { document.getElementById('trackError').textContent = translations[currentLanguage].trackError; document.getElementById('trackError').style.display = 'block'; trackInput.classList.add('border-red-500'); hasError = true; }
+             // Check for duplicate only if track is not empty
+             if (track && isDuplicateTrack(track)) {
+                 document.getElementById('trackError').textContent = translations[currentLanguage].duplicateTrack;
+                 document.getElementById('trackError').style.display = 'block';
+                 trackInput.classList.add('border-red-500');
+                 showToast(translations[currentLanguage].duplicateTrack, 'error');
+                 hasError = true;
+             }
+             if (hasError) return;
+             const newOrder = { id: Date.now(), phone, area, track, note, delivered: false, delayed: false, urgent, dateAdded: new Date().toISOString(), imageData: null };
+             orders.unshift(newOrder);
+             saveOrders(); renderOrders(); clearInputs();
+             showToast(translations[currentLanguage].orderAdded, 'success');
+        }
+        function clearInputs() {
+             document.getElementById('phone').value = ''; document.getElementById('area').value = '';
+             document.getElementById('track').value = ''; document.getElementById('note').value = '';
+             document.getElementById('urgent').checked = false;
+             document.getElementById('phoneError').style.display = 'none'; document.getElementById('phone').classList.remove('border-red-500');
+             document.getElementById('areaError').style.display = 'none'; document.getElementById('area').classList.remove('border-red-500');
+             document.getElementById('trackError').style.display = 'none'; document.getElementById('track').classList.remove('border-red-500');
+        }
+        function renderOrders() {
+             ordersContainer.innerHTML = '';
+             const query = document.getElementById('searchBox').value.trim().toLowerCase();
+             const statusFilter = document.getElementById('filterStatus').value;
+             const areaFilter = document.getElementById('filterArea').value;
+             const isRTL = document.documentElement.dir === 'rtl';
+
+             const filteredOrders = orders.filter(order => {
+                 const matchesSearch = query === '' || [order.phone, order.area, order.track, order.note || ''].some(field => field.toLowerCase().includes(query));
+                 const matchesStatus = statusFilter === 'all' || (statusFilter === 'delivered' && order.delivered) || (statusFilter === 'pending' && !order.delivered && !order.delayed) || (statusFilter === 'delayed' && order.delayed && !order.delivered);
+                 const matchesArea = areaFilter === 'all' || order.area === areaFilter;
+                 return matchesSearch && matchesStatus && matchesArea;
+             });
+
+             const ordersByArea = {};
+             filteredOrders.forEach(order => { if (!ordersByArea[order.area]) ordersByArea[order.area] = []; ordersByArea[order.area].push(order); });
+
+             if (filteredOrders.length === 0) {
+                 const noOrdersDiv = document.createElement('div'); noOrdersDiv.className = 'no-orders text-center text-gray-500 bg-gray-800 p-6 rounded-lg shadow'; noOrdersDiv.textContent = translations[currentLanguage].noOrders; ordersContainer.appendChild(noOrdersDiv); updateStats(); return;
+             }
+
+             Object.keys(ordersByArea).sort((a, b) => a.localeCompare(b, currentLanguage === 'ar' ? 'ar' : 'en')).forEach(area => {
+                 const areaOrders = ordersByArea[area];
+                 const areaGroup = document.createElement('div'); areaGroup.className = 'area-group bg-gray-800 rounded-lg shadow overflow-hidden mb-4';
+                 const areaHeader = document.createElement('div'); areaHeader.className = 'area-header bg-gray-700 p-3 flex justify-between items-center cursor-pointer hover:bg-gray-600 transition duration-150 ease-in-out';
+                 areaHeader.innerHTML = `<span class="area-name font-semibold text-white">${area}</span> <div class="flex items-center gap-2"> <span class="area-count bg-blue-500 text-white text-xs font-medium me-2 px-2.5 py-0.5 rounded-full">${areaOrders.length}</span> <i class="fas fa-chevron-down collapse-icon text-white transition-transform duration-300"></i> </div>`;
+
+                 const areaOrdersContainer = document.createElement('div');
+                 // Start collapsed with max-height 0 for animation
+                 areaOrdersContainer.className = 'area-orders px-3 space-y-3 transition-all duration-300 ease-in-out overflow-hidden max-h-0';
+                 areaOrdersContainer.style.paddingTop = '0'; areaOrdersContainer.style.paddingBottom = '0';
+
+                 areaHeader.onclick = function() {
+                     areaGroup.classList.toggle('collapsed');
+                     const icon = areaHeader.querySelector('.collapse-icon');
+                     if (areaGroup.classList.contains('collapsed')) {
+                         areaOrdersContainer.style.maxHeight = '0';
+                         areaOrdersContainer.style.paddingTop = '0'; areaOrdersContainer.style.paddingBottom = '0';
+                         icon.style.transform = isRTL ? 'rotate(90deg)' : 'rotate(-90deg)';
+                     } else {
+                         // Set max-height to scrollHeight to allow content to expand
+                         areaOrdersContainer.style.maxHeight = areaOrdersContainer.scrollHeight + "px";
+                         areaOrdersContainer.style.paddingTop = '0.75rem'; areaOrdersContainer.style.paddingBottom = '0.75rem';
+                         icon.style.transform = 'rotate(0deg)';
+                         // Reset overflow after animation completes to prevent clipping issues if content changes later
+                         setTimeout(() => { if (!areaGroup.classList.contains('collapsed')) areaOrdersContainer.style.overflow = 'visible'; }, 300);
+                     }
+                 };
+
+                 areaOrders.forEach(order => { const orderElement = createOrderElement(order); areaOrdersContainer.appendChild(orderElement); });
+                 areaGroup.appendChild(areaHeader); areaGroup.appendChild(areaOrdersContainer);
+                 ordersContainer.appendChild(areaGroup);
+                 // Make sections expanded by default by simulating a click after appending
+                 // areaHeader.click(); // Remove this line if you want them collapsed initially
+             });
+             updateStats();
+        }
+        function updateStats() {
+             let total = orders.length; let delivered = orders.filter(o => o.delivered).length; let delayed = orders.filter(o => o.delayed && !o.delivered).length; let pending = total - delivered - delayed;
+             document.getElementById('countTotal').textContent = total; document.getElementById('countDelivered').textContent = delivered; document.getElementById('countPending').textContent = Math.max(0, pending); document.getElementById('countDelayed').textContent = delayed;
+             const areaCounter = {}; orders.forEach(o => { areaCounter[o.area] = (areaCounter[o.area] || 0) + 1; });
+             let topArea = ''; let maxCount = 0; for (const area in areaCounter) { if (areaCounter[area] > maxCount) { topArea = area; maxCount = areaCounter[area]; } }
+             const mostAreaEl = document.getElementById('mostArea');
+             if (topArea) { mostAreaEl.textContent = `${translations[currentLanguage].mostAreaText} ${topArea} (${maxCount})`; mostAreaEl.style.display = 'block'; } else { mostAreaEl.style.display = 'none'; }
+        }
+        function createOrderElement(order) {
+             const div = document.createElement('div');
+             const isRTL = document.documentElement.dir === 'rtl'; const borderClass = isRTL ? 'border-r-4' : 'border-l-4';
+             div.className = `order bg-gray-700 p-4 rounded-lg shadow relative ${borderClass} ${order.urgent ? 'border-amber-500' : 'border-transparent'}`;
+             div.setAttribute('data-order-id', order.id);
+             let statusText = ''; let statusColorClass = '';
+             if (order.delivered) { statusText = translations[currentLanguage].statusDelivered; statusColorClass = 'bg-green-500'; }
+             else if (order.delayed) { statusText = translations[currentLanguage].statusDelayed; statusColorClass = 'bg-sky-500'; }
+             else { statusText = translations[currentLanguage].statusPending; statusColorClass = 'bg-red-500'; }
+             div.innerHTML = `
+                 <div class="order-info space-y-1 text-sm mb-3">
+                     <div class="flex items-center gap-2"> ${order.urgent ? `<i class="fas fa-star text-amber-400" title="${translations[currentLanguage].urgentLabel}"></i>` : ''} <strong class="font-semibold text-blue-300">${translations[currentLanguage].customerPhone}</strong> <span>${order.phone}</span> </div>
+                     <div><strong class="font-semibold text-blue-300">${translations[currentLanguage].area}</strong> ${order.area}</div>
+                     <div><strong class="font-semibold text-blue-300">${translations[currentLanguage].trackNumber}</strong> ${order.track}</div>
+                     ${order.note ? `<div><strong class="font-semibold text-blue-300">${translations[currentLanguage].notes}</strong> <span class="text-gray-300">${order.note}</span></div>` : ''}
+                 </div>
+                 ${order.imageData ? `<img src="${order.imageData}" alt="صورة الطلب" class="order-thumbnail w-12 h-12 object-cover rounded cursor-pointer mt-2 hover:opacity-80" onclick="showImageModal(event, '${order.imageData}')">` : ''}
+                 <span class="status inline-block ${statusColorClass} text-white text-xs font-medium px-2.5 py-0.5 rounded-full mb-3">${statusText}</span>
+                 <div class="btn-row flex flex-wrap gap-2 mt-2">
+                     <button class="icon-button btn-delivered ${order.delivered ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-500 hover:bg-gray-400'} text-white rounded-full w-8 h-8 flex items-center justify-center transition duration-150" onclick="toggleDelivered(${order.id})" title="${order.delivered ? translations[currentLanguage].statusPending : translations[currentLanguage].statusDelivered}"> <i class="fas ${order.delivered ? 'fa-times-circle' : 'fa-check-circle'}"></i> </button>
+                     <button class="icon-button btn-delay ${order.delayed ? 'bg-sky-600 hover:bg-sky-700' : 'bg-gray-500 hover:bg-gray-400'} text-white rounded-full w-8 h-8 flex items-center justify-center transition duration-150" onclick="toggleDelay(${order.id})" title="${order.delayed ? (currentLanguage === 'ar' ? 'إلغاء التأجيل' : 'Cancel Delay') : translations[currentLanguage].statusDelayed}"> <i class="fas fa-clock"></i> </button>
+                     <button class="icon-button btn-whatsapp bg-green-500 hover:bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center transition duration-150" onclick="openWhatsApp('${order.phone}')" title="WhatsApp"> <i class="fab fa-whatsapp"></i> </button>
+                     <button class="icon-button btn-camera bg-purple-500 hover:bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center transition duration-150" onclick="triggerCamera(${order.id})" title="${currentLanguage === 'ar' ? 'إرفاق صورة' : 'Attach Image'}"> <i class="fas fa-camera"></i> </button>
+                     <button class="icon-button btn-edit bg-blue-500 hover:bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center transition duration-150" onclick="editOrder(${order.id})" title="${translations[currentLanguage].editOrderTitle}"> <i class="fas fa-edit"></i> </button>
+                     <button class="icon-button btn-delete bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center transition duration-150" onclick="deleteOrderConfirm(${order.id})" title="${translations[currentLanguage].confirmBtnText}"> <i class="fas fa-trash"></i> </button>
+                 </div>`;
+             return div;
+        }
+        function toggleDelivered(id) {
+             const orderIndex = orders.findIndex(o => o.id === id);
+             if (orderIndex !== -1) { orders[orderIndex].delivered = !orders[orderIndex].delivered; if (orders[orderIndex].delivered) orders[orderIndex].delayed = false; saveOrders(); renderOrders(); }
+        }
+        function toggleDelay(id) {
+             const orderIndex = orders.findIndex(o => o.id === id);
+             if (orderIndex !== -1) { if (orders[orderIndex].delivered) { showToast('لا يمكن تأجيل طلب تم توصيله', 'error'); return; } orders[orderIndex].delayed = !orders[orderIndex].delayed; saveOrders(); renderOrders(); }
+        }
+        function deleteOrderConfirm(id) {
+             confirmCallback = () => deleteOrder(id);
+             document.getElementById('confirmMessage').textContent = translations[currentLanguage].confirmDeleteMessage;
+             document.getElementById('confirmTitle').textContent = translations[currentLanguage].confirmBtnText;
+             document.getElementById('confirmModal').style.display = 'flex';
+        }
+        function deleteOrder(id) {
+             const index = orders.findIndex(o => o.id === id);
+             if (index !== -1) { orders.splice(index, 1); saveOrders(); renderOrders(); showToast(translations[currentLanguage].orderDeleted, 'success'); }
+        }
+        function editOrder(id) {
+             const order = orders.find(o => o.id === id); if (!order) return;
+             document.getElementById('editPhone').value = order.phone; document.getElementById('editArea').value = order.area; document.getElementById('editTrack').value = order.track; document.getElementById('editNote').value = order.note || ''; document.getElementById('editUrgent').checked = order.urgent; document.getElementById('editOrderId').value = order.id;
+             document.querySelectorAll('#editModal .error-message').forEach(el => el.style.display = 'none'); document.querySelectorAll('#editModal input, #editModal textarea').forEach(el => el.classList.remove('border-red-500'));
+             document.getElementById('editModal').style.display = 'flex';
+        }
+        function updateOrder() {
+             const id = parseInt(document.getElementById('editOrderId').value);
+             const phoneInput = document.getElementById('editPhone'); const areaInput = document.getElementById('editArea'); const trackInput = document.getElementById('editTrack'); const noteInput = document.getElementById('editNote'); const urgentInput = document.getElementById('editUrgent');
+             const phone = phoneInput.value.trim(); const area = areaInput.value.trim(); const track = trackInput.value.trim(); const note = noteInput.value.trim(); const urgent = urgentInput.checked;
+             document.getElementById('editPhoneError').style.display = 'none'; phoneInput.classList.remove('border-red-500'); document.getElementById('editAreaError').style.display = 'none'; areaInput.classList.remove('border-red-500'); document.getElementById('editTrackError').style.display = 'none'; trackInput.classList.remove('border-red-500');
+             let hasError = false;
+             if (!validatePhone(phone)) { document.getElementById('editPhoneError').style.display = 'block'; phoneInput.classList.add('border-red-500'); hasError = true; }
+             if (!area) { document.getElementById('editAreaError').style.display = 'block'; areaInput.classList.add('border-red-500'); hasError = true; }
+             if (!track) { document.getElementById('editTrackError').textContent = translations[currentLanguage].trackError; document.getElementById('editTrackError').style.display = 'block'; trackInput.classList.add('border-red-500'); hasError = true; }
+             // Check for duplicate only if track is not empty
+             if (track && isDuplicateTrack(track, id)) {
+                 document.getElementById('editTrackError').textContent = translations[currentLanguage].duplicateTrack;
+                 document.getElementById('editTrackError').style.display = 'block';
+                 trackInput.classList.add('border-red-500');
+                 showToast(translations[currentLanguage].duplicateTrack, 'error');
+                 hasError = true;
+             }
+             if (hasError) return;
+             const orderIndex = orders.findIndex(o => o.id === id);
+             if (orderIndex !== -1) { orders[orderIndex] = { ...orders[orderIndex], phone, area, track, note, urgent }; saveOrders(); renderOrders(); closeModal('editModal'); showToast(translations[currentLanguage].orderUpdated, 'success'); }
+        }
+        function openWhatsApp(phone) {
+             const internationalPhone = phone.startsWith('0') ? `964${phone.substring(1)}` : phone; window.open(`https://wa.me/${internationalPhone}`, '_blank');
+        }
+        function showConfirmClearAll() {
+             confirmCallback = () => clearAllOrders();
+             document.getElementById('confirmMessage').textContent = translations[currentLanguage].confirmClearAllMessage;
+             document.getElementById('confirmTitle').textContent = translations[currentLanguage].clearAllOrdersTitle;
+             document.getElementById('confirmModal').style.display = 'flex';
+        }
+        function clearAllOrders() {
+             orders = []; localStorage.removeItem('orders'); saveOrders(); renderOrders(); showToast(translations[currentLanguage].allOrdersCleared, 'success');
+        }
+        function confirmAction() {
+             closeModal('confirmModal'); if (typeof confirmCallback === 'function') { confirmCallback(); confirmCallback = null; }
+        }
+        function closeModal(modalId) {
+             const modal = document.getElementById(modalId); if(modal) modal.style.display = 'none';
+        }
+        function showToast(message, type = 'success') {
+             const toast = document.getElementById('toast'); toast.textContent = message;
+             toast.className = `toast fixed bottom-5 right-5 text-white py-2 px-5 rounded-lg shadow-md text-sm z-[1000] transition-opacity duration-300 opacity-0 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+             toast.classList.replace('opacity-0', 'opacity-100'); setTimeout(() => { toast.classList.replace('opacity-100', 'opacity-0'); }, 3000);
+        }
+        function downloadBackup() {
+             try { const data = JSON.stringify(orders, null, 2); const blob = new Blob([data], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `orders_backup_${new Date().toISOString().split('T')[0]}.json`; document.body.appendChild(a); a.click(); setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 0); } catch (error) { console.error("Backup error:", error); showToast("حدث خطأ أثناء إنشاء النسخة الاحتياطية", "error"); }
+        }
+
+        // --- Camera and Image Functions (UPDATED) ---
+
+        // Function to trigger the hidden file input
+        function triggerCamera(orderId) {
+            // Store the orderId globally before triggering the input
+            currentOrderIdForImage = orderId;
+            // Programmatically click the hidden file input
+            hiddenCameraInput.click();
+        }
+
+        // Function to handle the file selection/capture
+        function handleImageCapture(event) {
+            const file = event.target.files[0];
+
+            // Check if we have a file and a stored order ID
+            if (!file || currentOrderIdForImage === null) {
+                console.warn("No file selected or capture cancelled, or order ID not set.");
+                // Reset the stored order ID
+                currentOrderIdForImage = null;
+                // Clear the input value to allow selecting the same file again if needed
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result; // Base64 image data
+                const orderIndex = orders.findIndex(o => o.id === currentOrderIdForImage);
+
+                if (orderIndex !== -1) {
+                    orders[orderIndex].imageData = imageData;
+                    saveOrders(); // Save the updated order with the image
+                    renderOrders(); // Re-render to show the thumbnail
+                    showToast(translations[currentLanguage].imageAttached, 'success');
+                } else {
+                    console.error(`Order with ID ${currentOrderIdForImage} not found after image capture.`);
+                    showToast(translations[currentLanguage].imageAttachError, 'error');
+                }
+
+                // Reset the stored order ID and clear the input value after processing
+                currentOrderIdForImage = null;
+                event.target.value = '';
+            };
+            reader.onerror = function() {
+                 showToast(translations[currentLanguage].imageAttachError, 'error');
+                 console.error("FileReader error for order:", currentOrderIdForImage, reader.error);
+                 // Reset the stored order ID and clear the input value on error
+                 currentOrderIdForImage = null;
+                 event.target.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showImageModal(event, imageData) {
+             event.stopPropagation(); if (imageData) { modalImage.src = imageData; imageModal.style.display = 'flex'; }
+        }
+        function closeImageModal(event = null) {
+             if (event && event.target !== imageModal && event.target !== modalImage && event.target !== document.querySelector('.image-modal-close')) { return; }
+             imageModal.style.display = 'none'; modalImage.src = '';
+        }
+
+    </script>
+
 </body>
 </html>
+
